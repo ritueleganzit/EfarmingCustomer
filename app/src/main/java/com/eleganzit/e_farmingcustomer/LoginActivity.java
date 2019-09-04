@@ -5,8 +5,10 @@ import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,6 +19,12 @@ import com.eleganzit.e_farmingcustomer.api.RetrofitAPI;
 import com.eleganzit.e_farmingcustomer.api.RetrofitInterface;
 import com.eleganzit.e_farmingcustomer.model.LoginRespose;
 import com.eleganzit.e_farmingcustomer.utils.UserSessionManager;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Calendar;
 import java.util.regex.Matcher;
@@ -33,6 +41,7 @@ public class LoginActivity extends AppCompatActivity {
     EditText ed_email,ed_password;
     ProgressDialog progressDialog;
     UserSessionManager userSessionManager;
+    private String Token,device_token;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,17 +82,107 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(isValid())
                 {
-                    loginUser();
+                    if (Token!=null) {
+                        loginUser();
+                    }
+                    else
+                    {
+                        Thread t=new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener( LoginActivity.this,  new OnSuccessListener<InstanceIdResult>() {
+                                    @Override
+                                    public void onSuccess(InstanceIdResult instanceIdResult) {
+                                        Token = instanceIdResult.getToken();
+                                        device_token=Token;
+                                        Log.e("get token",Token);
+                                    }
+                                });
+                                if (Token!=null)
+                                {
+                                    Log.d("mytokenn", Token);
+
+                                    device_token=Token;
+                                    StrictMode.ThreadPolicy threadPolicy = new StrictMode.ThreadPolicy.Builder().build();
+                                    StrictMode.setThreadPolicy(threadPolicy);
+                                    try {
+                                        JSONObject jsonObject=new JSONObject(Token);
+                                        Log.d("mytoken", jsonObject.getString("token"));
+                                        //devicetoken=jsonObject.getString("token");
+
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                    //getLoginBoth(Token);
+
+                                }
+                                else
+                                {
+
+                                }
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });t.start();
+                        loginUser();
+                    }
                 }
             }
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Thread t=new Thread(new Runnable() {
+            @Override
+            public void run() {
+                FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener( LoginActivity.this,  new OnSuccessListener<InstanceIdResult>() {
+                    @Override
+                    public void onSuccess(InstanceIdResult instanceIdResult) {
+                        Token = instanceIdResult.getToken();
+                        device_token=Token;
+                        Log.e("get token",Token);
+                    }
+                });
+                if (Token!=null)
+                {
+                    Log.d("mytokenn", Token);
+
+                    device_token=Token;
+                    StrictMode.ThreadPolicy threadPolicy = new StrictMode.ThreadPolicy.Builder().build();
+                    StrictMode.setThreadPolicy(threadPolicy);
+                    try {
+                        JSONObject jsonObject=new JSONObject(Token);
+                        Log.d("mytoken", jsonObject.getString("token"));
+                        //devicetoken=jsonObject.getString("token");
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    //getLoginBoth(Token);
+
+                }
+                else
+                {
+
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });t.start();
+    }
 
     private void loginUser() {
         progressDialog.show();
         RetrofitInterface myInterface = RetrofitAPI.getRetrofit().create(RetrofitInterface.class);
-        Call<LoginRespose> call = myInterface.loginUser(ed_email.getText().toString(), ed_password.getText().toString());
+        Call<LoginRespose> call = myInterface.loginUser(ed_email.getText().toString(), ed_password.getText().toString(),"android",""+Token);
         call.enqueue(new Callback<LoginRespose>() {
             @Override
             public void onResponse(Call<LoginRespose> call, Response<LoginRespose> response) {

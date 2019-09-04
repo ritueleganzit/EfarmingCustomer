@@ -10,4 +10,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="view_map"><u>VIEW MAP</u></string>
+<!--
+    <string name="dummytext"><![CDATA[You have chosen "1" plot X 500 SQFT = <b>Rs 2500*</b><font color=#0000FF>Includes</font></b>]]></string>
+--><string name="dummytext">You have chosen "1" plot X 500 SQFT = <b>Rs 2500*</b></string> <!--red-->
 </resources>

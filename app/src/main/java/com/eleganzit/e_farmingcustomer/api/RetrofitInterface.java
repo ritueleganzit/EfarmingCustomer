@@ -5,6 +5,7 @@ import com.eleganzit.e_farmingcustomer.model.AvailablePlotsResponse;
 import com.eleganzit.e_farmingcustomer.model.ContactOfficeResponse;
 import com.eleganzit.e_farmingcustomer.model.FarmDetailsResponse;
 import com.eleganzit.e_farmingcustomer.model.FarmSlotsResponse;
+import com.eleganzit.e_farmingcustomer.model.FarmingpartnerNotificationResponse;
 import com.eleganzit.e_farmingcustomer.model.ForgotPasswordResponse;
 import com.eleganzit.e_farmingcustomer.model.InstructFarmerResponse;
 import com.eleganzit.e_farmingcustomer.model.LoginRespose;
@@ -41,8 +42,9 @@ public interface RetrofitInterface {
     @POST("/efarming-AdminPanel/efarm-api/loginCustomer")
     Call<LoginRespose> loginUser(
             @Field("email") String email,
-                @Field("password") String password
-
+                @Field("password") String password,
+  @Field("device_id") String device_id,
+            @Field("device_token") String device_token
     );
 
     @FormUrlEncoded()
@@ -90,6 +92,12 @@ public interface RetrofitInterface {
             @Field("dob") String dob
 
     );
+@FormUrlEncoded
+    @POST("/efarming-AdminPanel/efarm-api/customerNotification")
+    Call<FarmingpartnerNotificationResponse> customerNotification(
+            @Field("customer_id") String customer_id
+    );
+
 
     @Multipart
     @POST("/efarming-AdminPanel/efarm-api/updateProfile")

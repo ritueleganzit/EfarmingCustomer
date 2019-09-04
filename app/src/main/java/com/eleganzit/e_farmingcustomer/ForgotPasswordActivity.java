@@ -79,6 +79,10 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                         finish();
                         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                     }
+                    else
+                    {
+                        Toast.makeText(ForgotPasswordActivity.this, "Enter valid email", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
 

@@ -243,7 +243,14 @@ public class MainActivity extends AppCompatActivity implements View.OnDragListen
                     @Override
                     public void onClick(View view) {
                         d.dismiss();
-                        sendVegetables();
+                        if (exerciseSelectedList.size()>0){
+                            sendVegetables();
+                        }
+                        else
+                        {
+                            Toast.makeText(MainActivity.this, "No vegetables selected", Toast.LENGTH_SHORT).show();
+                        }
+
                     }
                 });
 
@@ -315,7 +322,8 @@ public class MainActivity extends AppCompatActivity implements View.OnDragListen
                     if (response.body().getStatus().toString().equalsIgnoreCase("1")) {
 
                         Toast.makeText(MainActivity.this, "Submitted Successfully ", Toast.LENGTH_SHORT).show();
-                        Intent i = new Intent(MainActivity.this, NavHomeActivity.class).putExtra("from","select_veg");
+
+                        Intent i = new Intent(MainActivity.this, PaymentActivity.class).putExtra("from","select_veg");
                         // Closing all the Activities
 
                         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

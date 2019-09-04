@@ -59,7 +59,14 @@
             android:layout_height="match_parent"
             app:layoutManager="android.support.v7.widget.LinearLayoutManager"
             android:orientation="vertical"/>
-
+        <TextView
+            android:layout_width="wrap_content"
+            android:text="No Data"
+            android:visibility="gone"
+            android:fontFamily="@font/poppins_regular"
+            android:id="@+id/nodata"
+            android:layout_centerInParent="true"
+            android:layout_height="wrap_content"/>
     </RelativeLayout>
 
 </RelativeLayout>

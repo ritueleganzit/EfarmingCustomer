@@ -1,10 +1,13 @@
 package com.eleganzit.e_farmingcustomer.utils;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.media.RingtoneManager;
@@ -13,8 +16,9 @@ import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import com.eleganzit.e_farmingcustomer.NotificationsActivity;
+import com.eleganzit.e_farmingcustomer.NavHomeActivity;
 import com.eleganzit.e_farmingcustomer.R;
+import com.eleganzit.e_farmingcustomer.utils.OreoNotification;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -22,128 +26,187 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
-
+    private static final String CHANNEL_ID = "efarmcustomer";
+    private static final String CHANNEL_NAME = "efarmcustomer";
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
-        JSONObject jsonObject= null;
-        try {
-            jsonObject = new JSONObject(remoteMessage.getData().get("message")+"");
-            showNotification1(""+jsonObject.getString("message"));
-
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            sendNotification1(remoteMessage);
+        }else{
+            sendNotification(remoteMessage);
         }
-
-        Log.d("notificationdata",""+remoteMessage.getData());
     }
+    @SuppressLint("LongLogTag")
+    private void sendNotification(RemoteMessage remoteMessage) {
+        if (!isAppIsInBackground(getApplicationContext())) {
+            //foreground app
+            Log.e("remoteMessage foreground", remoteMessage.getData().toString());
+            String title = remoteMessage.getData().get("title");
+            String body="";
+            JSONObject jsonObject= null;
+            try {
+                jsonObject = new JSONObject(remoteMessage.getData().get("message"));
+                body = jsonObject.getString("message");
 
-    private void showNotification1( String text)
-    {
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            Intent resultIntent = new Intent(getApplicationContext() , NavHomeActivity.class);
+            resultIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
+                    0 /* Request code */, resultIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+            NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 
-        Intent i = new Intent(this, NotificationsActivity.class);
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID);
+            notificationBuilder.setAutoCancel(true)
+                    .setDefaults(Notification.DEFAULT_ALL)
+                    .setWhen(System.currentTimeMillis())
+                    .setSmallIcon(getNotificationIcon())
+                    .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
+                    .setNumber(10)
+                    .setContentIntent(pendingIntent)
+                    .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
+                    .setColor(getResources().getColor(R.color.colorPrimaryDark))
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+                    .setTicker("Efarming Customer")
+                    .setContentTitle(title)
+                    .setContentText(body)
+                    .setContentInfo("Info");
+            notificationManager.notify(1, notificationBuilder.build());
+        }else{
+            Log.e("remoteMessage background", remoteMessage.getData().toString());
+            Map<String, String> data = remoteMessage.getData();
+            String title = data.get("title");
+            String body = null;
+            JSONObject jsonObject= null;
+            try {
+                jsonObject = new JSONObject(remoteMessage.getData().get("message"));
+                body = jsonObject.getString("message");
 
-        Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            Intent resultIntent = new Intent(getApplicationContext() , NavHomeActivity.class);
+            resultIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
+                    0 /* Request code */, resultIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+            NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-
-                .setAutoCancel(true)
-
-                .setDefaults(Notification.DEFAULT_SOUND)
-
-                .setSmallIcon(getNotificationIcon())
-
-                .setContentText(text)
-
-                .setContentTitle("VKC Official")
-
-                .setSound(uri)
-
-                .setVibrate(new long[]{1000,500})
-
-                .setContentIntent(pendingIntent)
-
-                .setColor(getResources().getColor(R.color.colorPrimary));
-
-        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        int m = (int) ((new Date().getTime() / 1000L) % Integer.MAX_VALUE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-            //notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-            String id = "id_product";
-
-            // The user-visible name of the channel.
-
-            CharSequence name = "VKC Official";
-
-            // The user-visible description of the channel.
-
-            String description = text;
-
-            int importance = NotificationManager.IMPORTANCE_MAX;
-
-            @SuppressLint("WrongConstant") NotificationChannel mChannel = new NotificationChannel(id, name, importance);
-
-            // Configure the notification channel.
-
-            mChannel.setDescription(description);
-
-            mChannel.enableLights(true);
-
-            // Sets the notification light color for notifications posted to this
-
-            // channel, if the device supports this feature.
-
-            mChannel.setLightColor(Color.RED);
-
-            assert manager != null;
-
-            manager.createNotificationChannel(mChannel);
-
-            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext(),"id_product")
-
-                    .setSmallIcon(getNotificationIcon())//your app icon
-
-                    .setBadgeIconType(getNotificationIcon()) //your app icon
-
-                    .setChannelId(id)
-
-                    .setSound(uri)
-
-                    .setVibrate(new long[]{1000,500})
-
-                    .setContentTitle(name)
-
-                    .setAutoCancel(true)
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID);
+            notificationBuilder.setAutoCancel(true)
+                    .setDefaults(Notification.DEFAULT_ALL)
+                    .setWhen(System.currentTimeMillis())
+                    .setSmallIcon(getNotificationIcon())
+                    .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
+                    .setNumber(10)
+                    .setColor(getResources().getColor(R.color.colorPrimaryDark))
 
                     .setContentIntent(pendingIntent)
+                    .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
+                    .setTicker("Efarming Customer")
+                    .setContentTitle(title)
+                    .setContentText(body)
+                    .setContentInfo("Info");
+            notificationManager.notify(1, notificationBuilder.build());
+        }
+    }
 
-                    .setNumber(1)
-
-                    .setColor(255)
-
-                    .setContentText(text)
-
-                    .setWhen(System.currentTimeMillis());
-
-            manager.notify(m, notificationBuilder.build());
-
+    public static boolean isAppIsInBackground(Context context) {
+        boolean isInBackground = true;
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT_WATCH) {
+            List<ActivityManager.RunningAppProcessInfo> runningProcesses = am.getRunningAppProcesses();
+            for (ActivityManager.RunningAppProcessInfo processInfo : runningProcesses) {
+                if (processInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                    for (String activeProcess : processInfo.pkgList) {
+                        if (activeProcess.equals(context.getPackageName())) {
+                            isInBackground = false;
+                        }
+                    }
+                }
+            }
+        } else {
+            List<ActivityManager.RunningTaskInfo> taskInfo = am.getRunningTasks(1);
+            ComponentName componentInfo = taskInfo.get(0).topActivity;
+            if (componentInfo.getPackageName().equals(context.getPackageName())) {
+                isInBackground = false;
+            }
         }
 
-        manager.notify(m, builder.build());
+        return isInBackground;
+    }
+
+    @SuppressLint("NewApi")
+    private void sendNotification1(RemoteMessage remoteMessage) {
+        if (!isAppIsInBackground(getApplicationContext())) {
+            //foreground app
+            Log.e("remoteMessage", remoteMessage.getData().toString());
+            String title = remoteMessage.getData().get("title");
+
+            String body = null;
+            JSONObject jsonObject= null;
+            try {
+                jsonObject = new JSONObject(remoteMessage.getData().get("message"));
+                body = jsonObject.getString("message");
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            Intent resultIntent = new Intent(getApplicationContext(), NavHomeActivity.class);
+            resultIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
+                    0 /* Request code */, resultIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+            Uri defaultsound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+
+            OreoNotification oreoNotification = new OreoNotification(this);
+            Notification.Builder builder = oreoNotification.getOreoNotification(title, body, pendingIntent, defaultsound, String.valueOf(R.drawable.ic_launcher_background));
+builder        .setColor(getResources().getColor(R.color.colorPrimaryDark));
+
+            int i = 0;
+            oreoNotification.getManager().notify(i, builder.build());
+        }else{
+            String body = null;
+            Log.e("remoteMessage", remoteMessage.getData().toString());
+            String title = remoteMessage.getData().get("title");
+            JSONObject jsonObject= null;
+            try {
+                jsonObject = new JSONObject(remoteMessage.getData().get("message"));
+                body = jsonObject.getString("message");
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            ;
+            Intent resultIntent = new Intent(getApplicationContext(), NavHomeActivity.class);
+            resultIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
+                    0 /* Request code */, resultIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+            Uri defaultsound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+
+            OreoNotification oreoNotification = new OreoNotification(this);
+            Notification.Builder builder = oreoNotification.getOreoNotification(title, body, pendingIntent, defaultsound, String.valueOf(R.drawable.ic_launcher_background));
+builder                    .setColor(getResources().getColor(R.color.colorPrimaryDark));
+
+            NotificationManager notificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            int i = 0;
+            oreoNotification.getManager().notify(i, builder.build());
+        }
 
     }
 
     private int getNotificationIcon () {
         boolean useWhiteIcon = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP);
-        return useWhiteIcon ? R.drawable.e_farm_logo : R.drawable.e_farm_logo;
+        return useWhiteIcon ? R.drawable.ic_app : R.mipmap.ic_launcher;
     }
 }
